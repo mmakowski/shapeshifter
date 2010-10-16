@@ -4,7 +4,7 @@ Provides functions and templates for generating HTML reponses.
 import httplib
 
 __author__ = 'Maciek Makowski'
-__version__ = '0.0.1'
+__version__ = '1.0.0'
 
 def send_html_response(http, title, body):
     http.send_response(httplib.OK)
@@ -17,7 +17,7 @@ page_template = '''
   <head>
     <title>%s</title>
   </head>
-  <body>huhu!!!
+  <body>
 %s
   </body>
 </html>
