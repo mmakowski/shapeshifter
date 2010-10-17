@@ -31,7 +31,7 @@ def PUT(http, path):
     '''
     Receives the module sent in the request and makes it available in this Shapeshifter instance under the name
     specified in path. Expected entries in form data:
-    - module_text: the contents of the module
+    - module: the contents of the module
     '''
     mod_name = path
     content_type, pdict = cgi.parse_header(http.headers.getheader('content-type'))
@@ -42,7 +42,7 @@ def PUT(http, path):
     http.send_response(httplib.CREATED)
     http.send_header('Location', '/ssmodule/%s' % mod_name)
     http.end_headers()
-    content = data.get('module_text')
+    content = data.get('module')
     with open('%s.py' % mod_name, 'w') as mod_file:
         mod_file.write(content[0])
     _reload_depending_modules(mod_name)
