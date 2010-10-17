@@ -1,10 +1,14 @@
 '''
-An utility which issues requests to remote Shapeshifter instances.
+An utility which issues requests to remote Shapeshifter instances. Can be used in two ways:
+
+1. by importing it in a python script and calling request();
+2. by running it from the command line.
 '''
 
 import httplib
 import mimetypes
 import os
+import sys
 
 default_port = 5457
 
@@ -40,15 +44,20 @@ def _get_content_type(filename):
     return mimetypes.guess_type(filename)[0] or 'application/octet-stream'
 
 
-def _print_usage():
-    print 'ssc targets URI method [mappings]'
-
-
 def _file_content(path):
     with open(path) as f: return f.read()
 
 
 def request(targets, uri, method='POST', properties={}, files={}):
+    '''
+    Sends a request to Shapeshifter web servers. 
+    - targets: a list of web server URLs, each in format "host:port"
+    - uri: the URI to request from each server
+    - method: the HTTP method to use
+    - properties: text fields to be submitted in the request
+    - files: files to be sent in the request; each entry should map a form id to a local file path, the file
+             will be read and its contents sent.
+    '''
     file_data = [(id, os.path.basename(path), _file_content(path)) for (id, path) in files.items()]
     content_type, form_data = _encode_multipart_formdata(properties.items(), file_data)
     responses = dict()
@@ -59,11 +68,35 @@ def request(targets, uri, method='POST', properties={}, files={}):
     return responses
     
 
+def _print_usage():
+    print 'ssc targets URI method [mappings]'
+
+
+def _split_form_data(data_map):
+    properties = dict()
+    files = dict()
+    for (key, value) in [tuple(m.split('=')) for m in data_map.split(',')]:
+        if value.startswith('file:'):
+            files[key] = value[5:]
+        else:
+            properties[key] = value
+    return (properties, files)
+
+
 def main():
-    responses = request(['localhost:%s' % default_port], '/ssmodule/ssc', method='PUT', files={'module': 'ssc.py'})
-    resp = responses.values()[0]
-    print resp.status, resp.reason
-    print resp.read()
+    if len(sys.argv) < 4:
+        _print_usage()
+        sys.exit(2)
+    targets = [t if ':' in t else '%s:%s' % (t, default_port) for t in sys.argv[1].split(',')]
+    uri = sys.argv[2]
+    method = sys.argv[3]
+    (properties, files) = _split_form_data(sys.argv[4]) if len(sys.argv) > 4 else ({}, {})
+    responses = request(targets, uri, method, properties, files)
+    for (target, response) in responses.items():
+        print '-- response from %s --' % target
+        print response.status, response.reason
+        print response.read()
+        print '----'
 
 
 if __name__ == '__main__':
