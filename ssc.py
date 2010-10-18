@@ -69,7 +69,7 @@ def request(targets, uri, method='POST', properties={}, files={}):
     
 
 def _print_usage():
-    print 'ssc targets URI method [mappings]'
+    print 'ssc targets method URI [mappings]'
 
 
 def _split_form_data(data_map):
@@ -88,8 +88,8 @@ def main():
         _print_usage()
         sys.exit(2)
     targets = [t if ':' in t else '%s:%s' % (t, default_port) for t in sys.argv[1].split(',')]
-    uri = sys.argv[2]
-    method = sys.argv[3]
+    method = sys.argv[2]
+    uri = sys.argv[3]
     (properties, files) = _split_form_data(sys.argv[4]) if len(sys.argv) > 4 else ({}, {})
     responses = request(targets, uri, method, properties, files)
     for (target, response) in responses.items():

@@ -1,6 +1,9 @@
 '''
 Provides methods for management of Shapeshifter modules.
 
+There is a certain overlap of functionality and duplication of code with 'form' and 'file' modules.
+This is to minimise the number of modules required for bootstrapping Shapeshifter.
+
 NOTE: there is currently no provision for any security. Running this module means that anyone
 who can connect to the Shapeshifter web server port can execute any code on the machine with
 the rights of the user running Shapeshifter.
@@ -39,13 +42,13 @@ def PUT(http, path):
         http.send_error(httplib.UNSUPPORTED_MEDIA_TYPE, 'expected content type: multipart/form-data, was: %s' % content_type)
         return
     data = cgi.parse_multipart(http.rfile, pdict)
+    content = data.get('module')
+    with open('%s.py' % mod_name, 'wb') as mod_file:
+        mod_file.write(content[0])
+    _reload_depending_modules(mod_name)
     http.send_response(httplib.CREATED)
     http.send_header('Location', '/ssmodule/%s' % mod_name)
     http.end_headers()
-    content = data.get('module')
-    with open('%s.py' % mod_name, 'w') as mod_file:
-        mod_file.write(content[0])
-    _reload_depending_modules(mod_name)
 
 
 def _list_modules(http):
