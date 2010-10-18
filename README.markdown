@@ -15,9 +15,8 @@ Quick Demo
 2. Copy the `bootstrap` directory to some temporary place on your
    computer and run `webserver.py` in there.
 3. In the root of your clone run:
-
-	ssc.py localhost PUT /ssmodule/hello module=file:modules/hello.py
-	ssc.py localhost POST /hello/World
+   * `ssc.py localhost PUT /ssmodule/hello module=file:modules/hello.py`
+   * `ssc.py localhost POST /hello/World`
 
 You can play around with modifying `modules/hello.py` and then
 running the two `ssc` command above to update and execute it. 
