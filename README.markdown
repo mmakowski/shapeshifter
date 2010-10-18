@@ -19,4 +19,4 @@ Quick Demo
 	ssc.py localhost POST /hello/World
 
 You can play around with modifying `modules/hello.py` and then
-running the two `ssc` command above to update and execute it.
+running the two `ssc` command above to update and execute it. 
