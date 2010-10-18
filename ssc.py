@@ -45,7 +45,7 @@ def _get_content_type(filename):
 
 
 def _file_content(path):
-    with open(path) as f: return f.read()
+    with open(path, 'rb') as f: return f.read()
 
 
 def request(targets, uri, method='POST', properties={}, files={}):
