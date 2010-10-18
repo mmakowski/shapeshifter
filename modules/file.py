@@ -26,6 +26,3 @@ def PUT(http, path):
             f.write(content_part)
     http.send_response(httplib.CREATED)
     http.end_headers()
-
-
-
