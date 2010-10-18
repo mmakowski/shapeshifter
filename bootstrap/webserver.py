@@ -19,6 +19,18 @@ __version__ = '0.0.1'
 port = 5457
 
 
+class HTTPException(Exception):
+    '''
+    When raised by a module will cause the error to be reported to the client as a HTTP response.
+    '''
+    def __init__(self, status, message):
+        Exception.__init__(self, message)
+        self.status = status
+
+    def send_as_http_response(self, http):
+        http.send_error(self.status, self.message)
+
+
 class _ModuleNotFoundException(Exception):
     def __init__(self, module_name):
         Exception.__init__(self, "module '%s' not found" % module_name)
@@ -68,6 +80,8 @@ class _ShapeshifterHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.send_error(httplib.NOT_FOUND, e.message)
                 return
             invoke(mod, path) 
+        except HTTPException, e:
+            e.send_as_http_response(self)
         except:
             self.send_error(httplib.INTERNAL_SERVER_ERROR, traceback.format_exc())
 
