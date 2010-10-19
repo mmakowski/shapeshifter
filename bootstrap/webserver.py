@@ -24,7 +24,8 @@ import html
 __author__ = 'Maciek Makowski'
 __version__ = '0.0.1'
 
-port = 5457
+
+default_port = 5457
 
 
 class HTTPException(Exception):
@@ -123,7 +124,7 @@ def POST(http, path):
         http.server.restart()
 
 
-def _main():
+def _main(port):
     try:
         server = _ShapeshifterHTTPServer(('', port), _ShapeshifterHandler)
         print 'server starting'
@@ -138,5 +139,5 @@ def _main():
 
 
 if __name__ == '__main__':
-    _main()
+    _main(int(sys.argv[1]) if len(sys.argv) > 1 else default_port)
 
