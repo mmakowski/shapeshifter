@@ -1,5 +1,13 @@
 '''
-Invokes other modules to handle incoming HTTP requests.
+Invokes other modules to handle incoming HTTP requests. It is a central module that determines
+the interface of other modules supported by Shapeshifter.
+
+When a request is received the module to be used is determined based on the first element
+of the URI. The module is then loaded and a method corresponding to the HTTP method of the 
+request is invoked.
+
+In order to support remote update of the web server itself the process can signal to the running
+script that it requires a restart by exiting with code 3.
 '''
 import BaseHTTPServer
 import httplib
@@ -115,7 +123,7 @@ def POST(http, path):
         http.server.restart()
 
 
-def main():
+def _main():
     try:
         server = _ShapeshifterHTTPServer(('', port), _ShapeshifterHandler)
         print 'server starting'
@@ -130,5 +138,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    _main()
 
