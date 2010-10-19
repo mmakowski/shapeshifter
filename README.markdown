@@ -6,6 +6,7 @@ consists of a controller script (`ssc`) and a set of modules which run
 on the servers with which we want to interact. There is a small
 set of core, bootstrap modules. All modules (including the bootstrap
 ones) can be uploaded and replaced at run time. Use cases include:
+
 * automatic deployment of applications built in a continuous
   integration environment
 * monitoring and management of processes running on servers via a web
