@@ -3,7 +3,7 @@ Shapeshifter
 
 Shapeshifter is a tool for interacting with remote servers. It
 consists of a controller script (`ssc`) and a set of modules which run
-on the servers with which you want to interact. There is a small
+on the servers with which we want to interact. There is a small
 set of core, bootstrap modules. All modules (including the bootstrap
 ones) can be uploaded and replaced at run time. Use cases include:
 * automatic deployment of applications built in a continuous
@@ -62,7 +62,9 @@ Usage
   `GET`, `POST` and `PUT`. 
 * `<URI>`: the URI to be requested. The first element of it (up to the
   first `/`) determines the module which will be invoked.
-* `<data>`: a set of key-value pairs in the format:
+* `<data>`: a set of key-value pairs to be sent as form data in the
+  format: 
   `<key_1>=<value_1>,...,<key_n>=<value_n>`. If a value is of the format
   `file:<path>` then the contents of file denoted by `<path>` will be
   sent.
+
