@@ -9,8 +9,15 @@ import httplib
 import mimetypes
 import os
 import sys
+import threading
+import traceback
+
+__author__ = 'Maciek Makowski'
+__version__ = '1.0.0'
+
 
 default_port = 5457
+
 
 def _encode_multipart_formdata(fields, files):
     """
@@ -40,12 +47,57 @@ def _encode_multipart_formdata(fields, files):
     content_type = 'multipart/form-data; boundary=%s' % BOUNDARY
     return content_type, body
 
+
 def _get_content_type(filename):
     return mimetypes.guess_type(filename)[0] or 'application/octet-stream'
 
 
 def _file_content(path):
     with open(path, 'rb') as f: return f.read()
+
+
+def _is_success_status(http_status):
+    return http_status < 400
+
+
+class Result(object):
+    '''
+    A result of a request to Shapeshifter instance. The field 'success' indicates
+    if an invocation was succesful. 
+    '''
+    def __init__(self, response=None, exception=None):
+        self.success = exception == None and response != None and _is_success_status(response.status)
+        self.response = response
+        self.exception = exception
+
+    def __str__(self):
+        return '%s:\n%s' % ('SUCCESS' if self.success else 'FAILURE',
+                            self.__format_response() if self.response != None else self.__format_exception())
+
+    def __format_response(self):
+        return '%s, %s\n%s' % (self.response.status, self.response.reason, self.response.read())
+
+    def __format_exception(self):
+        return self.exception
+
+
+class _Requester(threading.Thread):
+    def __init__(self, target, method, uri, form_data, content_type):
+        threading.Thread.__init__(self)
+        self.target = target
+        self.method = method
+        self.uri = uri
+        self.form_data = form_data
+        self.content_type = content_type
+        self.result = None
+
+    def run(self):
+        try:
+            conn = httplib.HTTPConnection(self.target)
+            conn.request(self.method, self.uri, self.form_data, {'Content-type': self.content_type})
+            self.result = Result(response = conn.getresponse())
+        except Exception, e:
+            self.result = Result(exception = traceback.format_exc(e))
 
 
 def request(targets, uri, method='POST', properties={}, files={}):
@@ -57,15 +109,20 @@ def request(targets, uri, method='POST', properties={}, files={}):
     - properties: text fields to be submitted in the request
     - files: files to be sent in the request; each entry should map a form id to a local file path, the file
              will be read and its contents sent.
+    Returns a dictionary mapping server names (as specified in targets list) to Result objects.
     '''
     file_data = [(id, os.path.basename(path), _file_content(path)) for (id, path) in files.items()]
     content_type, form_data = _encode_multipart_formdata(properties.items(), file_data)
-    responses = dict()
+    requesters = []
     for target in targets:
-        conn = httplib.HTTPConnection(target)
-        conn.request(method, uri, form_data, {'Content-type': content_type})
-        responses[target] = conn.getresponse()
-    return responses
+        requester = _Requester(target, method, uri, form_data, content_type)
+        requesters.append(requester)
+        requester.start()
+    results = dict()
+    for requester in requesters: 
+        requester.join()
+        results[requester.target] = requester.result
+    return results
     
 
 def _print_usage():
@@ -83,7 +140,7 @@ def _split_form_data(data_map):
     return (properties, files)
 
 
-def main():
+def _main():
     if len(sys.argv) < 4:
         _print_usage()
         sys.exit(2)
@@ -91,14 +148,13 @@ def main():
     method = sys.argv[2]
     uri = sys.argv[3]
     (properties, files) = _split_form_data(sys.argv[4]) if len(sys.argv) > 4 else ({}, {})
-    responses = request(targets, uri, method, properties, files)
-    for (target, response) in responses.items():
-        print '-- response from %s --' % target
-        print response.status, response.reason
-        print response.read()
+    results = request(targets, uri, method, properties, files)
+    for (target, result) in results.items():
+        print '-- invocation result for %s --' % target
+        print result
         print '----'
 
 
 if __name__ == '__main__':
-    main()
+    _main()
 
