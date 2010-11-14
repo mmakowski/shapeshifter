@@ -13,7 +13,7 @@ import threading
 import traceback
 
 __author__ = 'Maciek Makowski'
-__version__ = '1.0.0'
+__version__ = '1.1.0'
 
 
 default_port = 5457
@@ -71,11 +71,18 @@ class Result(object):
         self.exception = exception
 
     def __str__(self):
-        return '%s:\n%s' % ('SUCCESS' if self.success else 'FAILURE',
-                            self.__format_response() if self.response != None else self.__format_exception())
+        return '%s: %s' % ('SUCCESS' if self.success else 'FAILURE',
+                           self.__format_response() if self.response != None else self.__format_exception())
 
     def __format_response(self):
-        return '%s, %s\n%s' % (self.response.status, self.response.reason, self.response.read())
+        resp_str = self.response.read()
+        if len(resp_str) == 0:
+            fmt_resp = ''
+        elif not '\n' in resp_str:
+            fmt_resp = ': %s' % resp_str
+        else:
+            fmt_resp = ':\n%s' % resp_str
+        return '%s, %s%s' % (self.response.status, self.response.reason, fmt_resp)
 
     def __format_exception(self):
         return self.exception
@@ -103,7 +110,8 @@ class _Requester(threading.Thread):
 def request(targets, uri, method='POST', properties={}, files={}):
     '''
     Sends a request to Shapeshifter web servers. 
-    - targets: a list of web server URLs, each in format "host:port"
+    - targets: a list of web server URLs, each in format "host:port" or "host", in which case the default
+               port will be assumed
     - uri: the URI to request from each server
     - method: the HTTP method to use
     - properties: text fields to be submitted in the request
@@ -111,6 +119,7 @@ def request(targets, uri, method='POST', properties={}, files={}):
              will be read and its contents sent.
     Returns a dictionary mapping server names (as specified in targets list) to Result objects.
     '''
+    targets = [t if ':' in t else '%s:%s' % (t, default_port) for t in targets]
     file_data = [(id, os.path.basename(path), _file_content(path)) for (id, path) in files.items()]
     content_type, form_data = _encode_multipart_formdata(properties.items(), file_data)
     requesters = []
@@ -144,7 +153,7 @@ def _main():
     if len(sys.argv) < 4:
         _print_usage()
         sys.exit(2)
-    targets = [t if ':' in t else '%s:%s' % (t, default_port) for t in sys.argv[1].split(',')]
+    targets = sys.argv[1].split(',')
     method = sys.argv[2]
     uri = sys.argv[3]
     (properties, files) = _split_form_data(sys.argv[4]) if len(sys.argv) > 4 else ({}, {})

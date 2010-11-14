@@ -1,7 +1,7 @@
 '''
 Provides methods for management of Shapeshifter modules.
 
-There is a certain overlap of functionality and duplication of code with 'form' and 'file' modules.
+There is a certain overlap of functionality and duplication of code with 'file' module.
 This is to minimise the number of modules required for bootstrapping Shapeshifter.
 
 NOTE: there is currently no provision for any security. Running this module means that anyone
@@ -18,7 +18,7 @@ import pydoc
 import html
 
 __author__ = 'Maciek Makowski'
-__version__ = '0.0.1'
+__version__ = '1.0.0'
 
 
 def GET(http, path):
@@ -37,12 +37,7 @@ def PUT(http, path):
     - module: the contents of the module
     '''
     mod_name = path
-    content_type, pdict = cgi.parse_header(http.headers.getheader('content-type'))
-    if content_type != 'multipart/form-data':
-        http.send_error(httplib.UNSUPPORTED_MEDIA_TYPE, 'expected content type: multipart/form-data, was: %s' % content_type)
-        return
-    data = cgi.parse_multipart(http.rfile, pdict)
-    content = data.get('module')
+    content = http.data.get('module')
     with open('%s.py' % mod_name, 'wb') as mod_file:
         mod_file.write(content[0])
     _reload_depending_modules(mod_name)
